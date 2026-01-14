@@ -1,5 +1,5 @@
-const doh = 'https://sky.rethinkdns.com/1:-P8BOJGwnk1_pv__tt__X__72N3-8zEA63oAyA=='
-const dohjson = 'https://sky.rethinkdns.com/1:-P8BOJGwnk1_pv__tt__X__72N3-8zEA63oAyA=='
+const doh = 'https://sky.rethinkdns.com/1:-P____-______v__tt__f__73t______7_sA6A=='
+const dohjson = 'https://sky.rethinkdns.com/1:-P____-______v__tt__f__73t______7_sA6A=='
 const contype = 'application/dns-message'
 const jstontype = 'application/dns-json'
 
