@@ -1,5 +1,5 @@
-const doh = 'https://sky.rethinkdns.com/1:-N8BGACgfwD__7LfIkGswMAQVDAgAGEwAIg='
-const dohjson = 'https://sky.rethinkdns.com/1:-N8BGACgfwD__7LfIkGswMAQVDAgAGEwAIg='
+const doh = 'https://freedns.controld.com/no-ads-porn-gambling-malware-typo'
+const dohjson = 'https://freedns.controld.com/no-ads-porn-gambling-malware-typo'
 const contype = 'application/dns-message'
 const jstontype = 'application/dns-json'
 
