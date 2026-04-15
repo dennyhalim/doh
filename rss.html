@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RSS Aggregator</title>
+
+  <!-- Security: strict CSP -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; 
+             script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; 
+             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+             font-src https://fonts.gstatic.com; 
+             frame-src https://www.youtube.com; 
+             img-src * data: blob:; 
+             connect-src *;" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
+  <meta name="referrer" content="no-referrer" />
+
+  <!-- DOMPurify for XSS sanitization -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.5/purify.min.js"
+          integrity="sha512-jB0TkTBeQC9ZSkBqDhdmfTv1qdfbWpME0FIvZFQqTn20m2vMoMcQi0EjNRJfW5gx0mIAKWS5LOCg+SHMXkzFQ=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & variables ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f0e;
+      --bg2:       #181816;
+      --bg3:       #222220;
+      --border:    #2e2e2b;
+      --text:      #e8e6df;
+      --muted:     #888880;
+      --accent:    #e8c84a;
+      --accent2:   #c84a4a;
+      --yt:        #ff0000;
+      --radius:    4px;
+      --mono:      'IBM Plex Mono', monospace;
+      --serif:     'Playfair Display', Georgia, serif;
+      --sans:      'IBM Plex Sans', sans-serif;
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Layout ────────────────────────────────────────────── */
+    #app { display: flex; flex-direction: column; min-height: 100vh; }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15,15,14,0.95);
+      backdrop-filter: blur(8px);
+    }
+
+    .logo {
+      font-family: var(--serif);
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .logo span { opacity: 0.5; font-weight: 400; font-size: 0.95rem; }
+
+    .header-actions { display: flex; align-items: center; gap: 0.75rem; }
+
+    .btn {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(232,200,74,0.07); }
+    .btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .btn.primary:hover { background: #f0d55a; }
+
+    .body-wrap {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── Sidebar ───────────────────────────────────────────── */
+    #sidebar {
+      width: 220px;
+      min-width: 220px;
+      border-right: 1px solid var(--border);
+      padding: 1.25rem 0;
+      position: sticky;
+      top: 56px;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+      background: var(--bg);
+    }
+
+    .sidebar-label {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      padding: 0.3rem 1.25rem 0.5rem;
+    }
+
+    .cat-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0.5rem 1.25rem;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      font-weight: 400;
+      cursor: pointer;
+      text-align: left;
+      transition: color 0.15s, background 0.15s;
+      border-left: 2px solid transparent;
+    }
+    .cat-btn:hover { color: var(--text); background: var(--bg2); }
+    .cat-btn.active { color: var(--accent); border-left-color: var(--accent); background: rgba(232,200,74,0.06); font-weight: 500; }
+
+    .cat-count {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      background: var(--bg3);
+      padding: 0.1rem 0.35rem;
+      border-radius: 2px;
+      min-width: 22px;
+      text-align: center;
+    }
+    .cat-btn.active .cat-count { background: rgba(232,200,74,0.15); color: var(--accent); }
+
+    /* ── Main content ──────────────────────────────────────── */
+    #main {
+      flex: 1;
+      padding: 1.5rem 2rem;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .cat-title {
+      font-family: var(--serif);
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    #search-input {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 0.4rem 0.75rem;
+      width: 220px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    #search-input:focus { border-color: var(--accent); }
+    #search-input::placeholder { color: var(--muted); }
+
+    /* ── Feed grid ─────────────────────────────────────────── */
+    #feed-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+
+    .feed-section { grid-column: 1 / -1; }
+    .feed-section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 1.2rem 0 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .feed-section-name {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .feed-section-name a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .feed-section-name a:hover { color: var(--accent); }
+    .feed-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .feed-dot.yt { background: var(--yt); }
+    .feed-item-count {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    /* ── Article card ──────────────────────────────────────── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      animation: fadeIn 0.3s ease both;
+    }
+    .card:hover {
+      border-color: #444440;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .yt-embed-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .yt-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      cursor: pointer;
+      display: block;
+      transition: filter 0.2s;
+    }
+    .yt-thumb:hover { filter: brightness(0.8); }
+    .yt-play-btn {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .yt-play-btn svg {
+      width: 60px; height: 60px;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+      transition: transform 0.2s;
+    }
+    .yt-embed-wrap:hover .yt-play-btn svg { transform: scale(1.1); }
+    .yt-iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .card-body { padding: 0.9rem 1rem; flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
+
+    .card-source {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .card-source.yt-source { color: var(--yt); }
+
+    .card-title {
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .card-title:hover { color: var(--accent); }
+
+    .card-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+      -webkit-line-clamp: 3;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    /* Sanitize desc content */
+    .card-desc * { max-width: 100%; }
+    .card-desc img { display: none; }
+
+    .card-footer {
+      margin-top: auto;
+      padding-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .card-date {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--muted);
+    }
+    .card-link {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--accent);
+      text-decoration: none;
+      opacity: 0.7;
+      transition: opacity 0.15s;
+    }
+    .card-link:hover { opacity: 1; }
+
+    /* ── States ────────────────────────────────────────────── */
+    .state-box {
+      grid-column: 1 / -1;
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+    .state-box .big { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-banner {
+      background: rgba(200,74,74,0.12);
+      border: 1px solid rgba(200,74,74,0.3);
+      border-radius: var(--radius);
+      padding: 0.6rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--accent2);
+      margin-bottom: 1rem;
+    }
+
+    /* ── Toast ─────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem; right: 1.5rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text);
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      max-width: 300px;
+    }
+    #toast.show { opacity: 1; transform: none; }
+
+    /* ── Config modal ──────────────────────────────────────── */
+    #modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #modal-overlay.open { display: flex; }
+    #modal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      width: 520px;
+      max-width: 95vw;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    #modal h2 {
+      font-family: var(--serif);
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .field-label {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.35rem;
+    }
+    .field-input {
+      width: 100%;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 0.5rem 0.75rem;
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 1rem;
+    }
+    .field-input:focus { border-color: var(--accent); }
+    .modal-hint {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    .modal-hint code {
+      background: var(--bg3);
+      padding: 0.1rem 0.3rem;
+      border-radius: 2px;
+      color: var(--accent);
+    }
+    .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+    /* ── Responsive ────────────────────────────────────────── */
+    @media (max-width: 680px) {
+      #sidebar { display: none; }
+      #main { padding: 1rem; }
+      #feed-grid { grid-template-columns: 1fr; }
+      .cat-title { font-size: 1.2rem; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #444; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div class="logo">
+      &#9632; RSS<span>/ aggregator</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="refresh-btn" title="Refresh all feeds">↺ Refresh</button>
+      <button class="btn" id="settings-btn">⚙ Settings</button>
+    </div>
+  </header>
+
+  <div class="body-wrap">
+    <nav id="sidebar">
+      <div class="sidebar-label">Categories</div>
+      <div id="cat-list"></div>
+    </nav>
+
+    <main id="main">
+      <div class="toolbar">
+        <div class="cat-title" id="cat-title">All</div>
+        <input id="search-input" type="search" placeholder="Search articles…" autocomplete="off" />
+      </div>
+      <div id="error-area"></div>
+      <div id="feed-grid">
+        <div class="state-box">
+          <div class="big">📡</div>
+          Loading feeds…
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Config modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h2>Settings</h2>
+    <div class="field-label">OPML source URL</div>
+    <input class="field-input" id="opml-url-input" type="url"
+      placeholder="https://raw.githubusercontent.com/dennyhalim/cfg/refs/heads/master/linux/www/php/feeds.opml" />
+    <div class="modal-hint">
+      Point to a raw OPML file — e.g. from your GitHub repo.<br>
+      Default: <code>./feeds.opml</code> (same directory as index.html).<br><br>
+      CORS proxy: <code id="proxy-display"></code>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="modal-cancel">Cancel</button>
+      <button class="btn primary" id="modal-save">Save &amp; Reload</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════
+   SECURITY HELPERS
+   ═══════════════════════════════════════════════════ */
+
+/** Sanitize HTML string using DOMPurify (strips XSS) */
+function sanitize(html) {
+  if (typeof DOMPurify !== 'undefined') {
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ['b','i','em','strong','p','br','a','ul','ol','li','span','pre','code'],
+      ALLOWED_ATTR: ['href','title','rel'],
+      FORCE_BODY: true,
+    });
+  }
+  // Fallback: strip all tags
+  return html.replace(/<[^>]*>/g, '');
+}
+
+/** Safe text extraction from an element string */
+function stripTags(html) {
+  const d = document.createElement('div');
+  d.innerHTML = sanitize(html);
+  return d.textContent || d.innerText || '';
+}
+
+/** Validate URL — only http/https */
+function safeUrl(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    return u.href;
+  } catch { return null; }
+}
+
+/* ═══════════════════════════════════════════════════
+   CONFIG & STATE
+   ═══════════════════════════════════════════════════ */
+
+const STORAGE_KEY = 'rss-agg-opml-url';
+const CORS_PROXY  = 'https://api.codetabs.com/v1/proxy?quest=;
+// Alternative proxies if allorigins fails:
+// const CORS_PROXY = 'https://corsproxy.io/?';
+// const CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
+
+let state = {
+  opmlUrl: localStorage.getItem(STORAGE_KEY) || './feeds.opml',
+  feeds: [],        // parsed from OPML
+  articles: [],     // all loaded articles
+  activeCategory: 'All',
+  loading: false,
+  errors: [],
+};
+
+/* ═══════════════════════════════════════════════════
+   CORS FETCH
+   ═══════════════════════════════════════════════════ */
+
+async function corsGet(url) {
+  const safeU = safeUrl(url);
+  if (!safeU) throw new Error(`Blocked unsafe URL: ${url}`);
+
+  const proxyUrl = CORS_PROXY + encodeURIComponent(safeU);
+  const resp = await fetch(proxyUrl, { headers: { 'Accept': 'application/json' } });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
+  const json = await resp.json();
+  if (json.status?.http_code && json.status.http_code >= 400)
+    throw new Error(`Remote ${json.status.http_code} for ${url}`);
+  return json.contents || '';
+}
+
+/* ═══════════════════════════════════════════════════
+   OPML PARSER
+   ═══════════════════════════════════════════════════ */
+
+function parseOPML(xmlStr) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlStr, 'text/xml');
+  if (doc.querySelector('parsererror')) throw new Error('Invalid OPML XML');
+
+  const categories = [];
+
+  // Top-level outlines that have children = categories
+  const topOutlines = doc.querySelectorAll('body > outline');
+  topOutlines.forEach(outline => {
+    const xmlUrl = outline.getAttribute('xmlUrl');
+    if (xmlUrl) {
+      // Flat feed at top level → uncategorised
+      const cat = categories.find(c => c.name === 'Uncategorised') 
+        || { name: 'Uncategorised', feeds: [] };
+      if (!categories.includes(cat)) categories.push(cat);
+      const u = safeUrl(xmlUrl);
+      if (u) cat.feeds.push({ url: u, title: outline.getAttribute('title') || outline.getAttribute('text') || u, siteUrl: safeUrl(outline.getAttribute('htmlUrl')) });
+    } else {
+      // Category outline
+      const catName = outline.getAttribute('title') || outline.getAttribute('text') || 'Uncategorised';
+      const feeds = [];
+      outline.querySelectorAll('outline[xmlUrl]').forEach(child => {
+        const u = safeUrl(child.getAttribute('xmlUrl'));
+        if (u) feeds.push({
+          url: u,
+          title: child.getAttribute('title') || child.getAttribute('text') || u,
+          siteUrl: safeUrl(child.getAttribute('htmlUrl')),
+        });
+      });
+      if (feeds.length) categories.push({ name: catName, feeds });
+    }
+  });
+
+  return categories;
+}
+
+/* ═══════════════════════════════════════════════════
+   RSS / ATOM PARSER
+   ═══════════════════════════════════════════════════ */
+
+function parseXmlFeed(xmlStr, feedMeta) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlStr, 'text/xml');
+  if (doc.querySelector('parsererror')) return [];
+
+  const items = [];
+  const isAtom = !!doc.querySelector('feed');
+  const nodes = isAtom ? doc.querySelectorAll('entry') : doc.querySelectorAll('item');
+
+  const feedTitle = (doc.querySelector('channel > title, feed > title')?.textContent || feedMeta.title || '').trim();
+  const isYouTube = feedMeta.url.includes('youtube.com/feeds');
+
+  nodes.forEach(node => {
+    // Title
+    const title = stripTags(node.querySelector('title')?.textContent || '').trim();
+    if (!title) return;
+
+    // Link
+    let link = '';
+    if (isAtom) {
+      link = node.querySelector('link[rel="alternate"]')?.getAttribute('href')
+          || node.querySelector('link')?.getAttribute('href')
+          || node.querySelector('id')?.textContent || '';
+    } else {
+      link = node.querySelector('link')?.textContent
+          || node.querySelector('guid')?.textContent || '';
+    }
+    link = safeUrl(link.trim()) || '';
+
+    // Date
+    const dateStr = node.querySelector('pubDate, published, updated, dc\\:date')?.textContent || '';
+    const date = dateStr ? new Date(dateStr) : null;
+
+    // Description / summary
+    const descRaw = node.querySelector('description, summary, content, content\\:encoded')?.textContent || '';
+    const desc = sanitize(descRaw);
+
+    // Thumbnail
+    let thumb = '';
+    // media:thumbnail
+    const mediaThumbs = node.querySelectorAll('thumbnail');
+    if (mediaThumbs.length) {
+      for (const t of mediaThumbs) {
+        const u = safeUrl(t.getAttribute('url') || '');
+        if (u) { thumb = u; break; }
+      }
+    }
+    // enclosure image
+    if (!thumb) {
+      const enc = node.querySelector('enclosure[type^="image"]');
+      if (enc) thumb = safeUrl(enc.getAttribute('url') || '') || '';
+    }
+    // og:image in description
+    if (!thumb) {
+      const m = descRaw.match(/src=["']([^"']+\.(jpg|jpeg|png|webp|gif))/i);
+      if (m) thumb = safeUrl(m[1]) || '';
+    }
+
+    // YouTube video ID
+    let ytVideoId = '';
+    if (isYouTube) {
+      const vidNode = node.querySelector('videoId');
+      if (vidNode) ytVideoId = vidNode.textContent.trim();
+      // From link: https://www.youtube.com/watch?v=XXXX
+      if (!ytVideoId && link) {
+        const m = link.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+        if (m) ytVideoId = m[1];
+      }
+      if (ytVideoId && !thumb)
+        thumb = `https://i.ytimg.com/vi/${ytVideoId}/hqdefault.jpg`;
+    }
+
+    items.push({
+      id: link || title,
+      title,
+      link,
+      date,
+      desc,
+      thumb,
+      ytVideoId,
+      feedTitle: feedMeta.title || feedTitle,
+      feedUrl: feedMeta.url,
+      category: feedMeta.category,
+      isYouTube,
+    });
+  });
+
+  return items.slice(0, 20); // cap per feed
+}
+
+/* ═══════════════════════════════════════════════════
+   LOAD FEEDS
+   ═══════════════════════════════════════════════════ */
+
+async function loadFeed(feedMeta) {
+  try {
+    const xml = await corsGet(feedMeta.url);
+    return parseXmlFeed(xml, feedMeta);
+  } catch (e) {
+    state.errors.push(`${feedMeta.title}: ${e.message}`);
+    return [];
+  }
+}
+
+async function loadAll() {
+  if (state.loading) return;
+  state.loading = true;
+  state.errors = [];
+
+  showLoading();
+
+  try {
+    // Load OPML
+    let opmlXml;
+    if (state.opmlUrl.startsWith('./') || state.opmlUrl.startsWith('/')) {
+      const resp = await fetch(state.opmlUrl);
+      if (!resp.ok) throw new Error(`Could not load OPML: HTTP ${resp.status}`);
+      opmlXml = await resp.text();
+    } else {
+      opmlXml = await corsGet(state.opmlUrl);
+    }
+
+    state.feeds = parseOPML(opmlXml);
+  } catch (e) {
+    state.loading = false;
+    showError(`Failed to load OPML: ${e.message}`);
+    return;
+  }
+
+  // Flat list of all feeds with category annotation
+  const allFeeds = state.feeds.flatMap(cat =>
+    cat.feeds.map(f => ({ ...f, category: cat.name }))
+  );
+
+  if (!allFeeds.length) {
+    state.loading = false;
+    renderEmpty('No feeds found in OPML. Check your feeds.opml file.');
+    return;
+  }
+
+  // Fetch concurrently (batched to avoid rate-limits)
+  const BATCH = 4;
+  let allArticles = [];
+  for (let i = 0; i < allFeeds.length; i += BATCH) {
+    const batch = allFeeds.slice(i, i + BATCH);
+    const results = await Promise.all(batch.map(f => loadFeed(f)));
+    allArticles = allArticles.concat(results.flat());
+  }
+
+  // Sort by date desc
+  allArticles.sort((a, b) => (b.date || 0) - (a.date || 0));
+  state.articles = allArticles;
+  state.loading = false;
+
+  renderSidebar();
+  renderFeed();
+
+  if (state.errors.length) {
+    renderErrors(state.errors);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDERING
+   ═══════════════════════════════════════════════════ */
+
+function renderSidebar() {
+  const cats = ['All', ...state.feeds.map(c => c.name)];
+  const list = document.getElementById('cat-list');
+  list.innerHTML = '';
+
+  cats.forEach(cat => {
+    const count = cat === 'All'
+      ? state.articles.length
+      : state.articles.filter(a => a.category === cat).length;
+
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (cat === state.activeCategory ? ' active' : '');
+    btn.innerHTML = `<span>${cat}</span><span class="cat-count">${count}</span>`;
+    btn.addEventListener('click', () => {
+      state.activeCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('cat-title').textContent = cat;
+      renderFeed();
+    });
+    list.appendChild(btn);
+  });
+}
+
+function getVisibleArticles() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  let arts = state.activeCategory === 'All'
+    ? state.articles
+    : state.articles.filter(a => a.category === state.activeCategory);
+  if (q) arts = arts.filter(a =>
+    a.title.toLowerCase().includes(q) ||
+    a.feedTitle.toLowerCase().includes(q) ||
+    stripTags(a.desc).toLowerCase().includes(q)
+  );
+  return arts;
+}
+
+function renderFeed() {
+  const grid = document.getElementById('feed-grid');
+  const articles = getVisibleArticles();
+
+  if (!articles.length) {
+    grid.innerHTML = '<div class="state-box"><div class="big">🔍</div>No articles found.</div>';
+    return;
+  }
+
+  // Group by feed title within category
+  const groups = new Map();
+  articles.forEach(a => {
+    const key = a.feedTitle;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(a);
+  });
+
+  grid.innerHTML = '';
+  groups.forEach((arts, feedTitle) => {
+    const sec = document.createElement('div');
+    sec.className = 'feed-section';
+    const a0 = arts[0];
+
+    const dot = `<span class="feed-dot${a0.isYouTube ? ' yt' : ''}"></span>`;
+    const titleHtml = a0.feedUrl
+      ? `<a href="${a0.feedUrl}" target="_blank" rel="noopener noreferrer">${escHtml(feedTitle)}</a>`
+      : escHtml(feedTitle);
+
+    sec.innerHTML = `
+      <div class="feed-section-header">
+        ${dot}
+        <span class="feed-section-name">${titleHtml}</span>
+        <span class="feed-item-count">${arts.length} items</span>
+      </div>`;
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;';
+
+    arts.forEach((art, idx) => {
+      const card = buildCard(art, idx);
+      row.appendChild(card);
+    });
+
+    sec.appendChild(row);
+    grid.appendChild(sec);
+  });
+}
+
+function buildCard(art, idx) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.animationDelay = `${Math.min(idx * 40, 400)}ms`;
+
+  let mediaHtml = '';
+
+  if (art.ytVideoId) {
+    // YouTube: click to load iframe (lazy embed)
+    const vid = encodeURIComponent(art.ytVideoId);
+    mediaHtml = `
+      <div class="yt-embed-wrap" data-yt="${escHtml(art.ytVideoId)}">
+        <img class="yt-thumb" 
+             src="https://i.ytimg.com/vi/${escHtml(art.ytVideoId)}/hqdefault.jpg"
+             loading="lazy" alt="${escHtml(art.title)}" />
+        <div class="yt-play-btn">
+          <svg viewBox="0 0 68 48" xmlns="http://www.w3.org/2000/svg">
+            <path d="M66.52 7.74A8.55 8.55 0 0 0 60.71 1.9C55.4 0 34 0 34 0S12.6 0 7.29 1.9A8.55 8.55 0 0 0 1.48 7.74C0 13.07 0 24 0 24s0 10.93 1.48 16.26a8.55 8.55 0 0 0 5.81 5.84C12.6 48 34 48 34 48s21.4 0 26.71-1.9a8.55 8.55 0 0 0 5.81-5.84C68 34.93 68 24 68 24s0-10.93-1.48-16.26z" fill="#ff0000"/>
+            <path d="M27 34l18-10-18-10z" fill="#fff"/>
+          </svg>
+        </div>
+      </div>`;
+  } else if (art.thumb) {
+    mediaHtml = `<img class="card-thumb" src="${escHtml(art.thumb)}" loading="lazy" 
+                      alt="" onerror="this.style.display='none'" />`;
+  }
+
+  const dateStr = art.date
+    ? art.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : '';
+
+  const descText = stripTags(art.desc).trim().slice(0, 200);
+
+  card.innerHTML = `
+    ${mediaHtml}
+    <div class="card-body">
+      <div class="card-source${art.isYouTube ? ' yt-source' : ''}">${escHtml(art.feedTitle)}${art.isYouTube ? ' · YouTube' : ''}</div>
+      <a class="card-title" href="${escHtml(art.link || '#')}" target="_blank" rel="noopener noreferrer">
+        ${escHtml(art.title)}
+      </a>
+      ${descText ? `<div class="card-desc">${escHtml(descText)}</div>` : ''}
+      <div class="card-footer">
+        <span class="card-date">${dateStr}</span>
+        ${art.link ? `<a class="card-link" href="${escHtml(art.link)}" target="_blank" rel="noopener noreferrer">Read →</a>` : ''}
+      </div>
+    </div>`;
+
+  // YouTube lazy embed on click
+  if (art.ytVideoId) {
+    const wrap = card.querySelector('.yt-embed-wrap');
+    wrap.addEventListener('click', () => {
+      const iframe = document.createElement('iframe');
+      iframe.className = 'yt-iframe';
+      iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(art.ytVideoId)}?autoplay=1&rel=0`;
+      iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+      iframe.allowFullscreen = true;
+      iframe.title = art.title;
+      wrap.innerHTML = '';
+      wrap.appendChild(iframe);
+    });
+  }
+
+  return card;
+}
+
+/* ═══════════════════════════════════════════════════
+   STATE DISPLAYS
+   ═══════════════════════════════════════════════════ */
+
+function showLoading() {
+  document.getElementById('feed-grid').innerHTML =
+    `<div class="state-box"><span class="spinner"></span> Loading feeds…</div>`;
+  document.getElementById('error-area').innerHTML = '';
+}
+
+function showError(msg) {
+  document.getElementById('feed-grid').innerHTML =
+    `<div class="state-box"><div class="big">⚠</div>${escHtml(msg)}</div>`;
+}
+
+function renderEmpty(msg) {
+  document.getElementById('feed-grid').innerHTML =
+    `<div class="state-box"><div class="big">📭</div>${escHtml(msg)}</div>`;
+}
+
+function renderErrors(errs) {
+  const area = document.getElementById('error-area');
+  area.innerHTML = `<div class="error-banner">⚠ ${errs.length} feed(s) failed to load: ${escHtml(errs.slice(0,3).join(' • '))}${errs.length > 3 ? ` … +${errs.length-3} more` : ''}</div>`;
+}
+
+/* ═══════════════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════════════ */
+
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+let toastTimer;
+function toast(msg, duration = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), duration);
+}
+
+/* ═══════════════════════════════════════════════════
+   MODAL / SETTINGS
+   ═══════════════════════════════════════════════════ */
+
+document.getElementById('proxy-display').textContent = CORS_PROXY;
+
+document.getElementById('settings-btn').addEventListener('click', () => {
+  document.getElementById('opml-url-input').value = state.opmlUrl;
+  document.getElementById('modal-overlay').classList.add('open');
+});
+
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.remove('open');
+});
+
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('open');
+});
+
+document.getElementById('modal-save').addEventListener('click', () => {
+  const val = document.getElementById('opml-url-input').value.trim();
+  if (!val) return;
+  // Allow relative paths and valid https
+  if (!val.startsWith('./') && !val.startsWith('/') && !safeUrl(val)) {
+    toast('⚠ Enter a valid https:// URL or relative path');
+    return;
+  }
+  state.opmlUrl = val;
+  localStorage.setItem(STORAGE_KEY, val);
+  document.getElementById('modal-overlay').classList.remove('open');
+  toast('Settings saved. Reloading…');
+  setTimeout(loadAll, 300);
+});
+
+/* ═══════════════════════════════════════════════════
+   SEARCH
+   ═══════════════════════════════════════════════════ */
+
+let searchTimer;
+document.getElementById('search-input').addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    if (state.articles.length) renderFeed();
+  }, 250);
+});
+
+/* ═══════════════════════════════════════════════════
+   REFRESH
+   ═══════════════════════════════════════════════════ */
+
+document.getElementById('refresh-btn').addEventListener('click', () => {
+  toast('↺ Refreshing feeds…');
+  loadAll();
+});
+
+/* ═══════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════ */
+
+document.getElementById('cat-title').textContent = state.activeCategory;
+loadAll();
+</script>
+</body>
+</html>
