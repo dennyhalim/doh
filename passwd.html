@@ -247,8 +247,8 @@ function renderWord(word, capFirst, useLeet) {
 function getParams() {
   const p = new URLSearchParams(location.search);
   return {
-    wlen:  Math.max(4, Math.min(24, parseInt(p.get('wlen'))  || 10)),
-    nlen:  Math.max(0, Math.min(10, parseInt(p.get('nlen'))  || 3)),
+    wlen:  Math.max(5, Math.min(29, parseInt(p.get('wlen'))  || 10)),
+    nlen:  Math.max(1, Math.min(11, parseInt(p.get('nlen'))  || 3)),
     upper: p.get('upper') !== '0',           // default on
     leet:  p.get('leet')  === '1',           // default off
     sym:   p.get('sym')   === '1',           // default off
