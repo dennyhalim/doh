@@ -1,4 +1,6 @@
 # doh
+one hosting we can have doh, password generator
+
 deploy doh on cloudflare page 
 
 Secure, Offline, Memorable, Password Generator: https://doh-1b1.pages.dev/passwd.html
