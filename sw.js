@@ -3,6 +3,8 @@ const CACHE = "pwd-gen-v1";
 const ASSETS = [
   "/",
   "/index.html",
+  "/rekapass.html",
+  "/passwd.html",
   "/manifest.json",
   "/dict/en.txt",
   "/dict/fr.txt",
