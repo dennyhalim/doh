@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Password Generator</title>
+
+<style>
+  body {
+    font-family: Arial;
+    padding: 20px;
+    background: #121212;
+    color: #eee;
+  }
+
+  h1 {
+    margin-bottom: 15px;
+  }
+
+  .password {
+    background: #1e1e1e;
+    padding: 12px;
+    margin: 6px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+    border: 1px solid #333;
+  }
+
+  .password:hover {
+    background: #2a2a2a;
+  }
+
+  .copied {
+    color: #4caf50;
+    font-size: 12px;
+    margin-left: 10px;
+  }
+</style>
+</head>
+<body id="denny.wordpress.com">
+
+<h1>Password Generator</h1>
+<p>Click a password to copy</p>
+
+<div id="output">Loading...</div>
+
+<script>
+// ==============================
+// PARAMS
+// ==============================
+const params = new URLSearchParams(location.search);
+
+const lang = params.get("lang") || "en";
+const wordCount = parseInt(params.get("words")) || 4;
+const numberCount = parseInt(params.get("numbers")) || 3;
+const includeSymbols = params.get("symbols") === "true";
+const shuffleEnabled = params.get("shuffle") === "true";
+const passwordCount = parseInt(params.get("count")) || 10;
+
+// ==============================
+// LOAD TXT DICTIONARY
+// ==============================
+async function loadDictionary(language) {
+  try {
+    const res = await fetch(`dict/${language}.txt`);
+    const text = await res.text();
+
+    return text.split("\n")
+      .map(w => w.trim())
+      .filter(w => w);
+
+  } catch {
+    if (language !== "en") return loadDictionary("en");
+    return ["fallback","words","only"];
+  }
+}
+
+// ==============================
+// UTIL
+// ==============================
+function cap(w) {
+  return w.charAt(0).toUpperCase() + w.slice(1);
+}
+
+function rand(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function numbers(n) {
+  return Array.from({length:n}, () => Math.floor(Math.random()*10).toString());
+}
+
+function symbols(n=2) {
+  const s = "!@#$%^&*";
+  return Array.from({length:n}, () => rand(s));
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ==============================
+// GENERATE
+// ==============================
+function generate(words) {
+  let parts = [];
+
+  for (let i = 0; i < wordCount; i++) {
+    parts.push(cap(rand(words)));
+  }
+
+  parts.push(...numbers(numberCount));
+
+  if (includeSymbols) {
+    parts.push(...symbols());
+  }
+
+  if (shuffleEnabled) {
+    parts = shuffle(parts);
+  }
+
+  return parts.join("");
+}
+
+// ==============================
+// COPY
+// ==============================
+function copy(text, el) {
+  navigator.clipboard.writeText(text);
+
+  const note = document.createElement("span");
+  note.textContent = "Copied!";
+  note.className = "copied";
+
+  el.appendChild(note);
+
+  setTimeout(() => note.remove(), 1000);
+}
+
+// ==============================
+// MAIN
+// ==============================
+async function main() {
+  const container = document.getElementById("output");
+  const dict = await loadDictionary(lang);
+
+  container.innerHTML = "";
+
+  for (let i = 0; i < passwordCount; i++) {
+    const pwd = generate(dict);
+
+    const div = document.createElement("div");
+    div.className = "password";
+    div.textContent = pwd;
+
+    div.onclick = () => copy(pwd, div);
+
+    container.appendChild(div);
+  }
+}
+
+main();
+</script>
+
+</body>
+</html>
