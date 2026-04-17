@@ -5,6 +5,8 @@ const ASSETS = [
   "/index.html",
   "/manifest.json",
   "/dict/en.txt",
+  "/dict/fr.txt",
+  "/dict/kl.txt",
   "/dict/id.txt"
 ];
 
