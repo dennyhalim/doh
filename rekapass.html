@@ -2,126 +2,182 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Password Generator</title>
+
+<link rel="manifest" href="manifest.json">
 
 <style>
   body {
-    font-family: Arial;
-    padding: 20px;
+    font-family: system-ui;
+    margin: 0;
     background: #121212;
     color: #eee;
   }
 
-  h1 {
-    margin-bottom: 15px;
+  header {
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  #output {
+    padding: 15px;
   }
 
   .password {
     background: #1e1e1e;
     padding: 12px;
-    margin: 6px 0;
+    margin-bottom: 8px;
     border-radius: 6px;
     cursor: pointer;
-    transition: 0.2s;
-    border: 1px solid #333;
+    word-break: break-all;
   }
 
-  .password:hover {
-    background: #2a2a2a;
+  .password:active {
+    background: #333;
   }
 
   .copied {
-    color: #4caf50;
     font-size: 12px;
-    margin-left: 10px;
+    color: #4caf50;
+  }
+
+  .controls {
+    position: sticky;
+    bottom: 0;
+    background: #181818;
+    padding: 15px;
+    border-top: 1px solid #333;
+    display: grid;
+    gap: 10px;
+    max-width: 300px;
+    margin: 0 auto;
+    border-radius: 12px 12px 0 0;
+    }
+
+  input, button {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    background: #1e1e1e;
+    color: #fff;
+  }
+
+  button {
+    background: #4caf50;
+    font-weight: bold;
+  }
+
+  .checkbox {
+    display: flex;
+    gap: 8px;
+    align-items: center;
   }
 </style>
 </head>
-<body id="denny.wordpress.com">
+<body>
 
-<h1>Password Generator</h1>
-<p>Click a password to copy</p>
+<header>Password Generator</header>
 
-<div id="output">Loading...</div>
+<div id="output"></div>
+
+<div class="controls">
+  <input id="lang" placeholder="Languages (en,id,es)">
+  <input type="number" id="words" min="1" placeholder="Words">
+  <input type="number" id="numbers" min="0" placeholder="Numbers">
+  <input type="number" id="count" min="1" placeholder="Count">
+
+  <div class="checkbox">
+    <input type="checkbox" id="symbols">
+    <label>Symbols</label>
+  </div>
+
+  <div class="checkbox">
+    <input type="checkbox" id="shuffle">
+    <label>Shuffle</label>
+  </div>
+
+  <button onclick="generateUI()">Generate</button>
+</div>
 
 <script>
 // ==============================
-// PARAMS
+// INIT FROM URL
 // ==============================
 const params = new URLSearchParams(location.search);
 
-const lang = params.get("lang") || "en";
-const wordCount = parseInt(params.get("words")) || 4;
-const numberCount = parseInt(params.get("numbers")) || 3;
-const includeSymbols = params.get("symbols") === "true";
-const shuffleEnabled = params.get("shuffle") === "true";
-const passwordCount = parseInt(params.get("count")) || 10;
+function setValue(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
 
-// ==============================
-// LOAD TXT DICTIONARY
-// ==============================
-async function loadDictionary(language) {
-  try {
-    const res = await fetch(`dict/${language}.txt`);
-    const text = await res.text();
-
-    return text.split("\n")
-      .map(w => w.trim())
-      .filter(w => w);
-
-  } catch {
-    if (language !== "en") return loadDictionary("en");
-    return ["fallback","words","only"];
+  if (el.type === "checkbox") {
+    el.checked = val === "true";
+  } else {
+    el.value = val;
   }
+}
+
+setValue("lang", params.get("lang") || "en");
+setValue("words", params.get("words") || 4);
+setValue("numbers", params.get("numbers") || 3);
+setValue("count", params.get("count") || 10);
+setValue("symbols", params.get("symbols"));
+setValue("shuffle", params.get("shuffle"));
+
+// ==============================
+// LOAD DICTIONARY
+// ==============================
+async function loadDicts(langs) {
+  let all = [];
+
+  for (let l of langs) {
+    try {
+      const res = await fetch(`dict/${l}.txt`);
+      const txt = await res.text();
+      const words = txt.split("\n").map(w=>w.trim()).filter(Boolean);
+      all.push(...words);
+    } catch {}
+  }
+
+  return all.length ? all : ["fallback","words"];
 }
 
 // ==============================
 // UTIL
 // ==============================
-function cap(w) {
-  return w.charAt(0).toUpperCase() + w.slice(1);
+const cap = w => w[0].toUpperCase() + w.slice(1);
+const rand = a => a[Math.floor(Math.random()*a.length)];
+
+function nums(n){
+  return Array.from({length:n},()=>Math.floor(Math.random()*10));
 }
 
-function rand(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+function syms(n=2){
+  const s="!@#$%^&*";
+  return Array.from({length:n},()=>rand(s));
 }
 
-function numbers(n) {
-  return Array.from({length:n}, () => Math.floor(Math.random()*10).toString());
-}
-
-function symbols(n=2) {
-  const s = "!@#$%^&*";
-  return Array.from({length:n}, () => rand(s));
-}
-
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
   }
-  return arr;
+  return a;
 }
 
 // ==============================
 // GENERATE
 // ==============================
-function generate(words) {
+function gen(words, wc, nc, sym, shuf){
   let parts = [];
 
-  for (let i = 0; i < wordCount; i++) {
-    parts.push(cap(rand(words)));
-  }
+  for(let i=0;i<wc;i++) parts.push(cap(rand(words)));
+  parts.push(...nums(nc));
+  if(sym) parts.push(...syms());
 
-  parts.push(...numbers(numberCount));
-
-  if (includeSymbols) {
-    parts.push(...symbols());
-  }
-
-  if (shuffleEnabled) {
-    parts = shuffle(parts);
-  }
+  if(shuf) parts = shuffle(parts);
 
   return parts.join("");
 }
@@ -129,41 +185,59 @@ function generate(words) {
 // ==============================
 // COPY
 // ==============================
-function copy(text, el) {
+function copy(text, el){
   navigator.clipboard.writeText(text);
-
-  const note = document.createElement("span");
-  note.textContent = "Copied!";
-  note.className = "copied";
-
+  const note = document.createElement("div");
+  note.className="copied";
+  note.textContent="Copied!";
   el.appendChild(note);
+  setTimeout(()=>note.remove(),800);
+}
 
-  setTimeout(() => note.remove(), 1000);
+// ==============================
+// UPDATE URL
+// ==============================
+function updateURL(data){
+  const q = new URLSearchParams(data).toString();
+  history.replaceState(null,"","?"+q);
 }
 
 // ==============================
 // MAIN
 // ==============================
-async function main() {
-  const container = document.getElementById("output");
-  const dict = await loadDictionary(lang);
+async function generateUI(){
 
-  container.innerHTML = "";
+  const data = {
+    lang: document.getElementById("lang").value || "en",
+    words: document.getElementById("words").value || 4,
+    numbers: document.getElementById("numbers").value || 3,
+    count: document.getElementById("count").value || 10,
+    symbols: document.getElementById("symbols").checked,
+    shuffle: document.getElementById("shuffle").checked
+  };
 
-  for (let i = 0; i < passwordCount; i++) {
-    const pwd = generate(dict);
+  updateURL(data);
+
+  const langs = data.lang.split(",").map(l=>l.trim());
+  const dict = await loadDicts(langs);
+
+  const out = document.getElementById("output");
+  out.innerHTML="";
+
+  for(let i=0;i<data.count;i++){
+    const pwd = gen(dict, +data.words, +data.numbers, data.symbols, data.shuffle);
 
     const div = document.createElement("div");
-    div.className = "password";
-    div.textContent = pwd;
+    div.className="password";
+    div.textContent=pwd;
+    div.onclick=()=>copy(pwd, div);
 
-    div.onclick = () => copy(pwd, div);
-
-    container.appendChild(div);
+    out.appendChild(div);
   }
 }
 
-main();
+// run on load
+generateUI();
 </script>
 
 </body>
