@@ -174,5 +174,5 @@ function parseCsvLine(line) {
   result.push(current); return result;
 }
 function escapeXml(str) { return str.replace(/[<>&'"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c])); }
-function getMimeType(url) { const ext = url.split('.').pop().toLowerCase().split('?')[0]; return { pdf: 'application/pdf', mobi: 'application/x-mobipocket-ebook', azw3: 'application/vnd.amazon.ebook' }[ext] || 'application/epub+zip'; }
+function getMimeType(url) { const ext = url.split('.').pop().toLowerCase().split('?')[0]; return { txt: 'text/plain', pdf: 'application/pdf', mobi: 'application/x-mobipocket-ebook', azw3: 'application/vnd.amazon.ebook' }[ext] || 'application/epub+zip'; }
 function md5(str) { let hash = 0; for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; } return Math.abs(hash).toString(16); }
