@@ -1,11 +1,11 @@
 const CACHE = "pwd-gen-v1";
 
 const ASSETS = [
-  "/",
-  "/index.html",
+  "/manifest.json",
+  "/rekapass",
+  "/passwd",
   "/rekapass.html",
   "/passwd.html",
-  "/manifest.json",
   "/dict/en.txt",
   "/dict/fr.txt",
   "/dict/kl.txt",
