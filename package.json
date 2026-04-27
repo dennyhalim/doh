@@ -1,5 +1,5 @@
 {
         "dependencies": {
-                "read-excel-file": "9.0.6"
-        }
+                "read-excel-file": "^5.8.6"
+  }
 }
