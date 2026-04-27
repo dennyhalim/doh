@@ -1,4 +1,5 @@
-// functions/catalog.js
+// functions/opds.js
+// Rename file ini jadi apapun: books.xml.js, feed.js, katalog.js -> URL ikut berubah
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -7,11 +8,11 @@ export async function onRequestGet(context) {
   const query = url.searchParams.get('q')?.trim() || '';
   const noCache = url.searchParams.get('nocache') === '1';
 
-  const FEED_TITLE = 'My Book Catalog';
-  const FEED_AUTHOR = 'Your Library';
+  const FEED_TITLE = env.FEED_TITLE || 'My Book Catalog';
+  const FEED_AUTHOR = env.FEED_AUTHOR || 'Your Library';
   const BASE_URL = url.origin;
-  const CSV_URL = env.CSV_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTTcNN6fmETWj5DDNC-FGSkdmD-8jCspO1dbMTweH4OjUM8ofBCuUR0NA7VfyLJG8ho-hPp6aT_AJbb/pub?gid=2002946883&single=true&output=csv';
-  const CSV_FALLBACK = `${BASE_URL}/books.csv`;
+  const SCRIPT_PATH = url.pathname; // /opds, /books.xml, /feed, dll
+  const CSV_URL = env.CSV_URL || `https://docs.google.com/spreadsheets/d/e/2PACX-1vTTcNN6fmETWj5DDNC-FGSkdmD-8jCspO1dbMTweH4OjUM8ofBCuUR0NA7VfyLJG8ho-hPp6aT_AJbb/pub?gid=2002946883&single=true&output=csv`;
 
   // === GET CSV ===
   let csvData;
@@ -23,14 +24,7 @@ export async function onRequestGet(context) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     csvData = await res.text();
   } catch (e) {
-    console.log('External CSV failed:', e.message);
-    try {
-      const res = await fetch(CSV_FALLBACK, { cf: { cacheTtl: noCache? 0 : 3600 } });
-      if (!res.ok) throw new Error(`Fallback HTTP ${res.status}`);
-      csvData = await res.text();
-    } catch (e2) {
-      return new Response(`Error: Cannot fetch CSV. External: ${e.message}, Fallback: ${e2.message}`, { status: 500 });
-    }
+    return new Response(`Error: Cannot fetch CSV from ${CSV_URL}. ${e.message}`, { status: 500 });
   }
 
   // === PARSE CSV ===
@@ -43,15 +37,12 @@ export async function onRequestGet(context) {
   const allCategories = {};
   const allTags = {};
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
+  for (const line of lines) {
+    if (!line.trim()) continue;
     const row = parseCsvLine(line);
-    if (row.length!== headerCount) continue;
-    if (!row[0]) continue;
+    if (row.length!== headerCount ||!row[0]) continue;
 
-    const item = Object.fromEntries(headers.map((h, idx) => [h, row[idx]?.trim() || '']));
+    const item = Object.fromEntries(headers.map((h, i) => [h, row[i]?.trim() || '']));
     item.tags = item.tags? item.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
     item.opds_url = item.opds_url?.trim() || '';
 
@@ -72,8 +63,9 @@ export async function onRequestGet(context) {
   let feedTitle = FEED_TITLE;
 
   if (category) {
-    filteredBooks = filteredBooks.filter(b => b.category.toLowerCase() === category.toLowerCase());
-    filteredOpdsLinks = filteredOpdsLinks.filter(l => l.category.toLowerCase() === category.toLowerCase());
+    const c = category.toLowerCase();
+    filteredBooks = filteredBooks.filter(b => b.category.toLowerCase() === c);
+    filteredOpdsLinks = filteredOpdsLinks.filter(l => l.category.toLowerCase() === c);
     feedTitle = `${FEED_TITLE} - ${category}`;
   } else if (tag) {
     filteredBooks = filteredBooks.filter(b => b.tags.includes(tag));
@@ -81,16 +73,16 @@ export async function onRequestGet(context) {
     feedTitle = `${FEED_TITLE} - Tag: ${tag}`;
   } else if (query) {
     const q = query.toLowerCase();
-    const filterFn = b => `${b.title} ${b.author} ${b.summary} ${b.tags.join(' ')}`.toLowerCase().includes(q);
-    filteredBooks = filteredBooks.filter(filterFn);
-    filteredOpdsLinks = filteredOpdsLinks.filter(filterFn);
+    const match = b => `${b.title} ${b.author} ${b.summary} ${b.tags.join(' ')}`.toLowerCase().includes(q);
+    filteredBooks = filteredBooks.filter(match);
+    filteredOpdsLinks = filteredOpdsLinks.filter(match);
     feedTitle = `${FEED_TITLE} - Search: ${query}`;
   }
 
   // === BUILD OPDS XML ===
   const updated = new Date().toISOString();
-  const params = new URLSearchParams({...(category && {cat: category}),...(tag && {tag}),...(query && {q: query}) });
-  const selfUrl = `${BASE_URL}/catalog${params.toString()? '?' + params : ''}`;
+  const params = new URLSearchParams({...(category && { cat: category }),...(tag && { tag }),...(query && { q: query }) });
+  const selfUrl = `${BASE_URL}${SCRIPT_PATH}${params.toString()? '?' + params : ''}`;
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog">
@@ -99,8 +91,8 @@ export async function onRequestGet(context) {
   <updated>${updated}</updated>
   <author><name>${escapeXml(FEED_AUTHOR)}</name></author>
   <link href="${escapeXml(selfUrl)}" rel="self" type="application/atom+xml;profile=opds-catalog;kind=${category||tag||query?'acquisition':'navigation'}"/>
-  <link href="${BASE_URL}/catalog" rel="start" type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
-  <link href="${BASE_URL}/catalog?q={searchTerms}" rel="search" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <link href="${BASE_URL}${SCRIPT_PATH}" rel="start" type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+  <link href="${BASE_URL}${SCRIPT_PATH}?q={searchTerms}" rel="search" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
 `;
 
   if (!category &&!tag &&!query) {
@@ -111,13 +103,13 @@ export async function onRequestGet(context) {
     <id>urn:category:${md5(cat)}</id>
     <title>${escapeXml(cat)}</title>
     <updated>${updated}</updated>
-    <link href="${BASE_URL}/catalog?cat=${encodeURIComponent(cat)}" rel="subsection" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+    <link href="${BASE_URL}${SCRIPT_PATH}?cat=${encodeURIComponent(cat)}" rel="subsection" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
     <content>${count} books</content>
   </entry>
 `;
     });
     Object.keys(allTags).sort().slice(0, 20).forEach(t => {
-      xml += ` <link href="${BASE_URL}/catalog?tag=${encodeURIComponent(t)}" rel="http://opds-spec.org/facet" opds:facetGroup="Tags" title="${escapeXml(t)}"/>
+      xml += ` <link href="${BASE_URL}${SCRIPT_PATH}?tag=${encodeURIComponent(t)}" rel="http://opds-spec.org/facet" opds:facetGroup="Tags" title="${escapeXml(t)}"/>
 `;
     });
   }
@@ -128,9 +120,8 @@ export async function onRequestGet(context) {
   }
 
   filteredBooks.forEach(book => {
-    const id = escapeXml(book.id || crypto.randomUUID());
     xml += ` <entry>
-    <id>urn:uuid:${id}</id>
+    <id>urn:uuid:${escapeXml(book.id || crypto.randomUUID())}</id>
     <title>${escapeXml(book.title || 'Untitled')}</title>
     <updated>${updated}</updated>
     <author><name>${escapeXml(book.author || 'Unknown')}</name></author>
@@ -164,7 +155,7 @@ export async function onRequestGet(context) {
     headers: {
       'Content-Type': 'application/atom+xml; charset=utf-8',
       'Cache-Control': noCache? 'no-cache' : 'public, max-age=300',
-      'X-OPDS-Source': csvData.includes('stempub')? 'external' : 'fallback'
+      'X-Script-Path': SCRIPT_PATH
     }
   });
 }
