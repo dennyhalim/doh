@@ -3,4 +3,4 @@ compatibility_date = "2024-09-01"
 
 [[kv_namespaces]]
 binding = "OPDS_CACHE"
-id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # bikin pake: wrangler kv:namespace create OPDS_CACHE
+id = "1ce641188dc74df192b64ac098882127" # bikin pake: wrangler kv:namespace create OPDS_CACHE
