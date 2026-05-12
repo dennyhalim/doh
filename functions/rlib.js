@@ -4,6 +4,7 @@ export async function onRequest(context) {
   const cat = url.searchParams.get('cat');
   const nocache = url.searchParams.has('nocache');
 
+  
   const CONFIG = {
     title: 'Remote Library OPDS',
     id: 'urn:uuid:6ba7b810-9dad-11d1-80b4-00c04fd430c8',
