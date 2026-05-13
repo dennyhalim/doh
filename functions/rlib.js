@@ -231,15 +231,16 @@ const entries = Object.entries(grouped).map(([key, book]) => {
   });
 }
 
-  const parseCachedBooks = (xml) => {
+const parseCachedBooks = (xml) => {
   const books = [];
-  const entryRegex = /<entry>[\s\S]*?<title>([^<]+)<\/title>[\s\S]*?<link href="([^"]+)" rel="http:\/\/opds-spec\.org\/acquisition\/open-access" type="([^"]+)"/g;
+  const entryRegex = /<entry>[\s\S]*?<title><!\[CDATA\[(.*?)\]\]><\/title>[\s\S]*?<link href="([^"]+)" rel="http:\/\/opds-spec\.org\/acquisition\/open-access" type="([^"]+)"/g;
   let match;
   while ((match = entryRegex.exec(xml))!== null) {
-    const title = match[1];
-    const url = match[2];
-    const ext = match[3].includes('epub')? 'epub' : match[3].includes('pdf')? 'pdf' : 'mobi';
-    books.push({ name: title, url, ext });
+    books.push({
+      name: match[1], // ini udah raw string dari CDATA
+      url: match[2],
+      ext: match[3].includes('epub')? 'epub' : match[3].includes('pdf')? 'pdf' : 'mobi'
+    });
   }
   return books;
 };
