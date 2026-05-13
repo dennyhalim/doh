@@ -17,7 +17,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
     allowed_ext: ['epub', 'pdf', 'mobi', 'cbz', 'pptx', 'ppsx'],
     max_depth: 1, // Pages Function max 30s, jangan dalam2
     cache_seconds: 36000,
-    max_files: 2000,
+    max_files: 5000,
   };
 
   // Daftar URL kamu. Edit di sini
