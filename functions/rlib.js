@@ -22,7 +22,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
 
   // Daftar URL kamu. Edit di sini
   const REMOTE_FOLDERS = {
-    'criswell': 'https://web.archive.org/web/20260512023217/http://wacriswell-indo.org/',
+    'sttip': 'https://web.archive.org/web/20260512023217/http://wacriswell-indo.org/',
     'gracelink': 'https://web.archive.org/web/20260513092018/https://media.sabda.org/kios/DVD_Library-SABDA-Anak-1.3/E-Buku/Gracelink/Beginner/',
     'komik': 'https://web.archive.org/web/20260513090456/https://media.sabda.org/komik/pdf/',
     'gits': 'https://web.archive.org/web/20260512030955/https://graphe-ministry.org/artikel-gratis/',
@@ -34,7 +34,6 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
     'bibclass': 'https://web.archive.org/web/20260513092355/https://media.sabda.org/kios/DVD_Library-SABDA-Anak-1.3/E-Buku/Bible_Classes-Eng/BC-Younger_Bible_Class_Curriculum/',
     'creation': 'https://web.archive.org/web/20260512074538/https://creation.com/en/pages/free-resources',
     'science': 'https://web.archive.org/web/20260512074819/https://www.3bible.com/books.php',
-    'febc': 'https://web.archive.org/web/20260513130343/https://www.febc.edu.sg/publications/tracts',
     'ironside': 'https://archive.org/download/HarryIronsideBooks',
     'htaylor': 'https://archive.org/download/HudsonTaylorBooks',
     'tozer': 'https://archive.org/download/A.w.TozerKindleBooks',
@@ -42,6 +41,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
     'ratorrey': 'https://archive.org/download/RobertTorreyBooks',
     'history': 'https://web.archive.org/web/20260512075817/https://nashpublications.com/baptist-church-history-books-for-class/',
     'calvinism': 'https://archive.org/download/AntiCALVINISTBooks',
+    'febc': 'https://web.archive.org/web/20260513130343/https://www.febc.edu.sg/publications/tracts',
     'hopetracts': 'https://web.archive.org/web/20260512081242/https://hopetracts.org/foreign/',
     'mandarin': 'https://web.archive.org/web/20260512060245/https://www.chinesechristiandiscernment.net/',
     'komikcbz': 'https://web.archive.org/web/20260513090303/https://media.sabda.org/komik/cbz/',
