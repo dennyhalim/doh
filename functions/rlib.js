@@ -14,7 +14,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
     title: 'Remote Libraries',
     id: 'urn:uuid:6ba7b810-9dad-11d1-80b4-00c04fd430c8',
     author: 'denny.wordpress.com',
-    allowed_ext: ['epub', 'pdf', 'mobi', 'pptx', 'ppsx'],
+    allowed_ext: ['epub', 'pdf', 'mobi', 'cbz', 'pptx', 'ppsx'],
     max_depth: 1, // Pages Function max 30s, jangan dalam2
     cache_seconds: 36000,
     max_files: 2000,
@@ -24,6 +24,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
   const REMOTE_FOLDERS = {
     'criswell': 'https://web.archive.org/web/20260512023217/http://wacriswell-indo.org/',
     'gits': 'https://web.archive.org/web/20260512030955/https://graphe-ministry.org/artikel-gratis/',
+    'komik': 'https://web.archive.org/web/20260513090303/https://media.sabda.org/komik/cbz/',
     'sabda': 'https://web.archive.org/web/20260513085521/https://gubuk.sabda.org/download',
     'buktisaksi': 'https://web.archive.org/web/20170114053258/buktidansaksi.com/resources',
     'separation': 'https://web.archive.org/web/20260425122340/https://www.middletownbiblechurch.org/separate/separate.htm',
