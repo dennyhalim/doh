@@ -2,8 +2,18 @@ export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const cat = url.searchParams.get('cat');
-  const nocache = url.searchParams.has('nocache');
   const q = url.searchParams.get('q')?.toLowerCase().trim();
+  const nocache = url.searchParams.get('nocache') === '1';
+const q = url.searchParams.get('q')?.toLowerCase().trim();
+
+if (nocache) {
+  await cache.delete(`cat:${cat}`);
+}
+
+const cached = await cache.get(`cat:${cat}`, 'json');
+if (cached && !nocache) {
+  // return cached with self link fixed
+}
   
   const CONFIG = {
     title: 'Remote Libraries',
