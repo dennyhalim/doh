@@ -41,6 +41,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
     'tozer': 'https://archive.org/download/A.w.TozerKindleBooks',
     'lschafer': 'https://archive.org/download/LewisSperryChaferBooks',
     'ratorrey': 'https://archive.org/download/RobertTorreyBooks',
+    'jcryle': 'https://archive.org/download/J.C.RyleKindleBooks',
     'history': 'https://web.archive.org/web/20260512075817/https://nashpublications.com/baptist-church-history-books-for-class/',
     'calvinism': 'https://archive.org/download/AntiCALVINISTBooks',
     'febc': 'https://web.archive.org/web/20260513130343/https://www.febc.edu.sg/publications/tracts',
