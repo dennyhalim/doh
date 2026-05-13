@@ -24,6 +24,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
   const REMOTE_FOLDERS = {
     'criswell': 'https://web.archive.org/web/20260512023217/http://wacriswell-indo.org/',
     'gits': 'https://web.archive.org/web/20260512030955/https://graphe-ministry.org/artikel-gratis/',
+    'sabda': 'https://web.archive.org/web/20260513085521/https://gubuk.sabda.org/download',
     'buktisaksi': 'https://web.archive.org/web/20170114053258/buktidansaksi.com/resources',
     'separation': 'https://web.archive.org/web/20260425122340/https://www.middletownbiblechurch.org/separate/separate.htm',
     'wayoflife': 'https://web.archive.org/web/20260414085034/https://www.wayoflife.org/free_ebooks/downloads/',
