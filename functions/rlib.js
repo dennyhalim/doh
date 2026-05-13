@@ -5,9 +5,9 @@ export async function onRequest(context) {
   const nocache = url.searchParams.get('nocache') === '1';
 const q = url.searchParams.get('q')?.toLowerCase().trim();
 
-if (nocache) {
-  await cache.delete(`cat:${cat}`);
-}
+//if (nocache) {
+//  await cache.delete(`cat:${cat}`);
+//}
 
  
   const CONFIG = {
