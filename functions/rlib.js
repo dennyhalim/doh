@@ -34,6 +34,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
     'bibclass': 'https://web.archive.org/web/20260513092355/https://media.sabda.org/kios/DVD_Library-SABDA-Anak-1.3/E-Buku/Bible_Classes-Eng/BC-Younger_Bible_Class_Curriculum/',
     'creation-tracts': 'https://web.archive.org/web/20260512074538/https://creation.com/en/pages/free-resources',
     'creation-science': 'https://web.archive.org/web/20260512074819/https://www.3bible.com/books.php',
+    'febc': 'https://web.archive.org/web/20260513130343/https://www.febc.edu.sg/publications/tracts',
     'ironside': 'https://archive.org/download/HarryIronsideBooks',
     'htaylor': 'https://archive.org/download/HudsonTaylorBooks',
     'tozer': 'https://archive.org/download/A.w.TozerKindleBooks',
