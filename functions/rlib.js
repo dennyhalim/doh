@@ -138,7 +138,7 @@ const safeText = (s) => {
 <updated>${new Date().toISOString()}</updated>
 <author><name>${CONFIG.author}</name></author>
 <link href="${BASE_URL}" rel="start" type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
-<link href="${BASE_URL}${url.search}" rel="self" type="application/atom+xml;profile=opds-catalog;kind=${kind}"/>
+<link href="${BASE_URL}${url.search.replace(/&/g, '&amp;')}" rel="self" type="application/atom+xml;profile=opds-catalog;kind=${kind}"/>
 ${entries}
 </feed>`;
     return xml;
