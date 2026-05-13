@@ -24,6 +24,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
   const REMOTE_FOLDERS = {
     'criswell': 'https://web.archive.org/web/20260512023217/http://wacriswell-indo.org/',
     'gracelink': 'https://web.archive.org/web/20260513092018/https://media.sabda.org/kios/DVD_Library-SABDA-Anak-1.3/E-Buku/Gracelink/Beginner/',
+    'komik': 'https://web.archive.org/web/20260513090456/https://media.sabda.org/komik/pdf/',
     'gits': 'https://web.archive.org/web/20260512030955/https://graphe-ministry.org/artikel-gratis/',
     'pedangroh': 'https://web.archive.org/web/20260218185337/https://graphe-ministry.org/en/sword-of-the-spirit/',
     'buktisaksi': 'https://web.archive.org/web/20170114053258/buktidansaksi.com/resources',
@@ -42,7 +43,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
     'calvinism': 'https://archive.org/download/AntiCALVINISTBooks',
     'hopetracts': 'https://web.archive.org/web/20260512081242/https://hopetracts.org/foreign/',
     'mandarin': 'https://web.archive.org/web/20260512060245/https://www.chinesechristiandiscernment.net/',
-    'komik': 'https://web.archive.org/web/20260513090303/https://media.sabda.org/komik/cbz/',
+    'komikcbz': 'https://web.archive.org/web/20260513090303/https://media.sabda.org/komik/cbz/',
   };
 
   const BASE_URL = `${url.protocol}//${url.host}${url.pathname}`;
