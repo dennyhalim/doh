@@ -17,8 +17,22 @@ export async function onRequest(context) {
 
   // Daftar URL kamu. Edit di sini
   const REMOTE_FOLDERS = {
+    'criswell': 'https://web.archive.org/web/20260512023217/http://wacriswell-indo.org/',
+    'gits': 'https://web.archive.org/web/20260512030955/https://graphe-ministry.org/artikel-gratis/',
+    'buktisaksi': 'https://web.archive.org/web/20191008055656/http://buktidansaksi.com/resources',
     'separation': 'https://web.archive.org/web/20260425122340/https://www.middletownbiblechurch.org/separate/separate.htm',
+    'wayoflife': 'https://web.archive.org/web/20260414085034/https://www.wayoflife.org/free_ebooks/downloads/',
+    'aig': 'https://archive.org/download/ken-ham-the-answers-book-for-kids-volume-7_202301',
+    'hopetracts': 'https://web.archive.org/web/20260512081242/https://hopetracts.org/foreign/',
+    'creation-tracts': 'https://web.archive.org/web/20260512074538/https://creation.com/en/pages/free-resources',
+    'creation-science': 'https://web.archive.org/web/20260512074819/https://www.3bible.com/books.php',
     'ironside': 'https://archive.org/download/HarryIronsideBooks',
+    'htaylor': 'https://archive.org/download/HudsonTaylorBooks',
+    'tozer': 'https://archive.org/download/A.w.TozerKindleBooks',
+    'lschafer': 'https://archive.org/download/LewisSperryChaferBooks',
+    'rtorrey': 'https://archive.org/download/RobertTorreyBooks',
+    'baptist-history': 'https://web.archive.org/web/20260512075817/https://nashpublications.com/baptist-church-history-books-for-class/',
+    'calvinism': 'https://archive.org/download/AntiCALVINISTBooks',
   };
 
   const BASE_URL = `${url.protocol}//${url.host}${url.pathname}`;
