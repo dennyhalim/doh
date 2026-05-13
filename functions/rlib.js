@@ -31,6 +31,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
     'separation': 'https://web.archive.org/web/20260425122340/https://www.middletownbiblechurch.org/separate/separate.htm',
     'wayoflife': 'https://web.archive.org/web/20260414085034/https://www.wayoflife.org/free_ebooks/downloads/',
     'aig': 'https://archive.org/download/ken-ham-the-answers-book-for-kids-volume-7_202301',
+    'bibclass': 'https://web.archive.org/web/20260513092355/https://media.sabda.org/kios/DVD_Library-SABDA-Anak-1.3/E-Buku/Bible_Classes-Eng/BC-Younger_Bible_Class_Curriculum/',
     'hopetracts': 'https://web.archive.org/web/20260512081242/https://hopetracts.org/foreign/',
     'creation-tracts': 'https://web.archive.org/web/20260512074538/https://creation.com/en/pages/free-resources',
     'creation-science': 'https://web.archive.org/web/20260512074819/https://www.3bible.com/books.php',
