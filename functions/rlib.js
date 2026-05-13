@@ -221,8 +221,8 @@ const entries = Object.entries(grouped).map(([key, book]) => {
   }
 
   const xml = buildAcquisition(cat, books);
-  if (!q) await cache.put(`cat:${cat}`, JSON.stringify({ ts: Date.now(), xml }), { expirationTtl: 7200 });
-
+    if (!q && !nocache) await cache.put(`cat:${cat}`, JSON.stringify({ ts: Date.now(), xml }), { expirationTtl: 7200 });
+      
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/atom+xml; charset=utf-8',
