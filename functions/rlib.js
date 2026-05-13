@@ -50,7 +50,15 @@ export async function onRequest(context) {
     'mobi': 'application/x-mobipocket-ebook'
   }[ext] || 'application/octet-stream');
 
-  const safeText = (s) => s.replace(/[<>&'"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c]));
+const safeText = (s) => {
+  if (!s) return '';
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+};
 
   const fetchTimeout = (url, ms = 8000) => {
     const controller = new AbortController();
@@ -140,18 +148,21 @@ ${entries}
 
   const buildAcquisition = (cat, books) => {
     const grouped = groupBooks(books);
-    const entries = Object.entries(grouped).map(([key, book]) => {
-      const formats = book.formats.map(f => `<link href="${safeText(f.url)}" rel="http://opds-spec.org/acquisition/open-access" type="${getMime(f.ext)}" title="${f.ext.toUpperCase()}"/>`).join('');
-      return `
+const entries = Object.entries(grouped).map(([key, book]) => {
+  const formats = book.formats.map(f => 
+    `<link href="${safeText(f.url)}" rel="http://opds-spec.org/acquisition/open-access" type="${getMime(f.ext)}" title="${safeText(f.ext.toUpperCase())}"/>`
+  ).join('');
+  
+  return `
 <entry>
-  <title>${safeText(book.title)}</title>
+  <title><![CDATA[${book.title}]]></title>
   <id>urn:uuid:${crypto.randomUUID()}</id>
   <updated>${new Date(book.mtime).toISOString()}</updated>
   <dc:language>en</dc:language>
-  <content type="text">Available: ${book.formats.map(f=>f.ext.toUpperCase()).join(', ')}</content>
+  <content type="text"><![CDATA[Available: ${book.formats.map(f=>f.ext.toUpperCase()).join(', ')}]]></content>
   ${formats}
 </entry>`;
-    }).join('');
+}).join('');
     return buildFeed(CONFIG.id+':'+cat, `${CONFIG.title} - ${cat}`, 'acquisition', entries);
   };
 
