@@ -8,7 +8,7 @@ export async function onRequest(context) {
   const CONFIG = {
     title: 'Remote Library OPDS',
     id: 'urn:uuid:6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-    author: 'Your Library',
+    author: 'Remote Libraries',
     allowed_ext: ['epub', 'pdf', 'mobi', 'pptx', 'ppsx'],
     max_depth: 1, // Pages Function max 30s, jangan dalam2
     cache_seconds: 36000,
