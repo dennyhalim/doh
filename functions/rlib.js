@@ -33,6 +33,7 @@ export async function onRequest(context) {
     'rtorrey': 'https://archive.org/download/RobertTorreyBooks',
     'baptist-history': 'https://web.archive.org/web/20260512075817/https://nashpublications.com/baptist-church-history-books-for-class/',
     'calvinism': 'https://archive.org/download/AntiCALVINISTBooks',
+    'mandarin': 'https://web.archive.org/web/20260512060245/https://www.chinesechristiandiscernment.net/',
   };
 
   const BASE_URL = `${url.protocol}//${url.host}${url.pathname}`;
