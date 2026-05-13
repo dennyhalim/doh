@@ -172,15 +172,27 @@ const entries = Object.entries(grouped).map(([key, book]) => {
     const cache = env.OPDS_CACHE; // KV binding
 
     if (!nocache) {
-      const cached = await cache.get(cacheKey, 'json');
-      if (cached && Date.now() - cached.ts < CONFIG.cache_seconds * 1000) {
-        return new Response(cached.xml, {
-          headers: {
-            'Content-Type': 'application/atom+xml; charset=utf-8',
-            'X-Cache': 'HIT'
-          }
-        });
-      }
+// Check cache first
+const cached = await cache.get(`cat:${cat}`, 'json');
+if (cached && !nocache) {
+  // Strip nocache=1 from rel="self" in cached XML
+  const fixedXml = cached.xml.replace(
+    /(<link href="[^"]+)(\?[^"]*&)?nocache=1(&[^"]*)?" rel="self"/,
+    (match, p1, p2, p3) => {
+      let query = (p2 || '') + (p3 || '');
+      query = query.replace(/^\?|&$/, ''); // clean leading ? and trailing &
+      query = query.replace(/^&/, ''); // clean leading & if left
+      return `<link href="${p1}${query ? '?' + query : ''}" rel="self"`;
+    }
+  );
+  
+  return new Response(fixedXml, {
+    headers: {
+      'Content-Type': 'application/atom+xml; charset=utf-8',
+      'X-Cache': 'HIT'
+    }
+  });
+}
     }
 
     let xml, status = 'MISS';
