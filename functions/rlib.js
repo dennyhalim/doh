@@ -29,6 +29,8 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
     'pedangroh': 'https://web.archive.org/web/20260218185337/https://graphe-ministry.org/en/sword-of-the-spirit/',
     'buktisaksi': 'https://web.archive.org/web/20170114053258/buktidansaksi.com/resources',
     'separation': 'https://web.archive.org/web/20260425122340/https://www.middletownbiblechurch.org/separate/separate.htm',
+    'family': 'https://web.archive.org/web/20260308184052/https://www.middletownbiblechurch.org/homefam/homefam.htm',
+    'seek': 'https://web.archive.org/web/20260305164101/https://www.middletownbiblechurch.org/helpseek/helpseek.htm',
     'wayoflife': 'https://web.archive.org/web/20260414085034/https://www.wayoflife.org/free_ebooks/downloads/',
     'aig': 'https://archive.org/download/ken-ham-the-answers-book-for-kids-volume-7_202301',
     'bibclass': 'https://web.archive.org/web/20260513092355/https://media.sabda.org/kios/DVD_Library-SABDA-Anak-1.3/E-Buku/Bible_Classes-Eng/BC-Younger_Bible_Class_Curriculum/',
