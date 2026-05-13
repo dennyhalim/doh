@@ -3,7 +3,7 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const cat = url.searchParams.get('cat');
   const nocache = url.searchParams.has('nocache');
-
+  const q = url.searchParams.get('q')?.toLowerCase().trim();
   
   const CONFIG = {
     title: 'Remote Library OPDS',
@@ -176,29 +176,63 @@ ${entries}
 
     if (cat === null) {
       xml = buildNav();
-    } else {
-      if (!REMOTE_FOLDERS[cat]) return new Response('Category not found', { status: 404 });
+} else {
+  if (!REMOTE_FOLDERS[cat]) return new Response('Category not found', { status: 404 });
 
-      try {
-        const books = await scanUrl(REMOTE_FOLDERS[cat]);
-        if (!books.length) throw new Error('No books found');
-        xml = buildAcquisition(cat, books);
-      } catch (e) {
-        // Fallback ke cache lama walau expired
-        const stale = await cache.get(cacheKey, 'json');
-        if (stale) {
-          return new Response(stale.xml, {
-            headers: {
-              'Content-Type': 'application/atom+xml; charset=utf-8',
-              'X-Cache': 'STALE',
-              'X-Cache-Error': e.message
-            }
-          });
-        }
-        throw e;
+  let books = [];
+  try {
+    // Kalau ada query q, coba ambil dari cache dulu
+    if (q) {
+      const cached = await cache.get(`cat:${cat}`, 'json');
+      if (!cached) {
+        return new Response('No cached data to search. Open category first.', { status: 404 });
       }
+      // Parse XML cache, ambil judul & url
+      books = parseCachedBooks(cached.xml);
+      status = 'CACHE-SEARCH';
+    } else {
+      books = await scanUrl(REMOTE_FOLDERS[cat]);
+      if (!books.length) throw new Error('No books found');
     }
+  } catch (e) {
+    const stale = await cache.get(`cat:${cat}`, 'json');
+    if (stale) {
+      books = parseCachedBooks(stale.xml);
+      status = 'STALE-SEARCH';
+    } else {
+      throw e;
+    }
+  }
 
+  // Filter kalau ada query
+  if (q) {
+    books = books.filter(b => b.name.toLowerCase().includes(q));
+  }
+
+  const xml = buildAcquisition(cat, books);
+  if (!q) await cache.put(`cat:${cat}`, JSON.stringify({ ts: Date.now(), xml }), { expirationTtl: 7200 });
+
+  return new Response(xml, {
+    headers: {
+      'Content-Type': 'application/atom+xml; charset=utf-8',
+      'X-Cache': status
+    }
+  });
+}
+
+  const parseCachedBooks = (xml) => {
+  const books = [];
+  const entryRegex = /<entry>[\s\S]*?<title>([^<]+)<\/title>[\s\S]*?<link href="([^"]+)" rel="http:\/\/opds-spec\.org\/acquisition\/open-access" type="([^"]+)"/g;
+  let match;
+  while ((match = entryRegex.exec(xml))!== null) {
+    const title = match[1];
+    const url = match[2];
+    const ext = match[3].includes('epub')? 'epub' : match[3].includes('pdf')? 'pdf' : 'mobi';
+    books.push({ name: title, url, ext });
+  }
+  return books;
+};
+    
     // Simpen ke KV. TTL 2 jam biar aman
     await cache.put(cacheKey, JSON.stringify({ ts: Date.now(), xml }), { expirationTtl: 7200 });
 
