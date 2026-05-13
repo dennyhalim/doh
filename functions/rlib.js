@@ -23,8 +23,9 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
   // Daftar URL kamu. Edit di sini
   const REMOTE_FOLDERS = {
     'criswell': 'https://web.archive.org/web/20260512023217/http://wacriswell-indo.org/',
-    'gits': 'https://web.archive.org/web/20260512030955/https://graphe-ministry.org/artikel-gratis/',
     'gracelink': 'https://web.archive.org/web/20260513092018/https://media.sabda.org/kios/DVD_Library-SABDA-Anak-1.3/E-Buku/Gracelink/Beginner/',
+    'gits': 'https://web.archive.org/web/20260512030955/https://graphe-ministry.org/artikel-gratis/',
+    'pedangroh': 'https://web.archive.org/web/20260218185337/https://graphe-ministry.org/en/sword-of-the-spirit/',
     'buktisaksi': 'https://web.archive.org/web/20170114053258/buktidansaksi.com/resources',
     'separation': 'https://web.archive.org/web/20260425122340/https://www.middletownbiblechurch.org/separate/separate.htm',
     'wayoflife': 'https://web.archive.org/web/20260414085034/https://www.wayoflife.org/free_ebooks/downloads/',
