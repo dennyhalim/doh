@@ -25,6 +25,7 @@ const q = url.searchParams.get('q')?.toLowerCase().trim();
     'criswell': 'https://web.archive.org/web/20260512023217/http://wacriswell-indo.org/',
     'gits': 'https://web.archive.org/web/20260512030955/https://graphe-ministry.org/artikel-gratis/',
     'komik': 'https://web.archive.org/web/20260513090303/https://media.sabda.org/komik/cbz/',
+    'gracelink': 'https://web.archive.org/web/20260513092018/https://media.sabda.org/kios/DVD_Library-SABDA-Anak-1.3/E-Buku/Gracelink/Beginner/',
     'sabda': 'https://web.archive.org/web/20260513085521/https://gubuk.sabda.org/download',
     'buktisaksi': 'https://web.archive.org/web/20170114053258/buktidansaksi.com/resources',
     'separation': 'https://web.archive.org/web/20260425122340/https://www.middletownbiblechurch.org/separate/separate.htm',
